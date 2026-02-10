@@ -69,22 +69,28 @@ app.post('/bfhl', async (req, res) => {
 
         try {
           const aiResponse = await axios.post(
-            'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent',
+            'https://api.groq.com/openai/v1/chat/completions',
             {
-              contents: [
+              model: 'llama3-8b-8192',
+              messages: [
                 {
-                  parts: [{ text: req.body.AI }]
+                  role: 'user',
+                  content: req.body.AI
                 }
-              ]
+              ],
+              temperature: 0.2
             },
             {
-              params: { key: process.env.GEMINI_API_KEY },
+              headers: {
+                Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+                'Content-Type': 'application/json'
+              },
               timeout: 7000
             }
           );
 
           data =
-            aiResponse?.data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ||
+            aiResponse?.data?.choices?.[0]?.message?.content?.trim() ||
             'No response generated';
         } catch (err) {
           data = 'AI service unavailable';
