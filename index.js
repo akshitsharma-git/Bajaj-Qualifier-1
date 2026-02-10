@@ -1,51 +1,118 @@
-import express from 'express';
-import dotenv from 'dotenv';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import { getFibonacci, getPrimes, getHCF, getLCM } from './utils.js';
+const express = require('express');
+const axios = require('axios');
+require('dotenv').config();
 
-dotenv.config();
+const { fibonacci, primeFilter, hcf, lcm } = require('./util');
+
 const app = express();
-app.use(express.json());
+const PORT = process.env.PORT || 3000;
+const EMAIL = 'akshit0274.be23@chitkara.edu.in';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+app.use(express.json({ strict: true }));
 
-// GET
+// Health check
 app.get('/health', (req, res) => {
-    res.status(200).json({
-        is_success: true,
-        official_email: process.env.OFFICIAL_EMAIL
-    });
+  res.status(200).json({
+    is_success: true,
+    official_email: EMAIL
+  });
 });
 
-// POST
+// Main API
 app.post('/bfhl', async (req, res) => {
-    try {
-        const { fibonacci, prime, lcm, hcf, AI } = req.body;
-        const email = process.env.OFFICIAL_EMAIL;
-        let responseData;
+  try {
+    if (!req.body || Object.keys(req.body).length === 0) {
+      return res.status(400).json({
+        is_success: false,
+        official_email: EMAIL,
+        message: 'Invalid request body'
+      });
+    }
 
-        // Mapping
-        if (fibonacci !== undefined) responseData = getFibonacci(fibonacci);
-        else if (prime) responseData = getPrimes(prime);
-        else if (lcm) responseData = getLCM(lcm);
-        else if (hcf) responseData = getHCF(hcf);
-        else if (AI) {
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-            const result = await model.generateContent(`Answer in exactly one word: ${AI}`);
-            responseData = result.response.text().trim();
-        } else {
-            return res.status(400).json({ is_success: false, message: "Invalid Input" });
+    const keys = Object.keys(req.body);
+    if (keys.length !== 1) {
+      return res.status(400).json({
+        is_success: false,
+        official_email: EMAIL,
+        message: 'Request must contain exactly one key'
+      });
+    }
+
+    const key = keys[0];
+    let data;
+
+    switch (key) {
+      case 'fibonacci':
+        data = fibonacci(req.body.fibonacci);
+        break;
+
+      case 'prime':
+        data = primeFilter(req.body.prime);
+        break;
+
+      case 'lcm':
+        data = lcm(req.body.lcm);
+        break;
+
+      case 'hcf':
+        data = hcf(req.body.hcf);
+        break;
+
+      case 'AI':
+        if (typeof req.body.AI !== 'string' || !req.body.AI.trim()) {
+          return res.status(400).json({
+            is_success: false,
+            official_email: EMAIL,
+            message: 'Invalid AI input'
+          });
         }
 
-        res.status(200).json({
-            is_success: true,
-            official_email: email,
-            data: responseData
+        try {
+          const aiResponse = await axios.post(
+            'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent',
+            {
+              contents: [
+                {
+                  parts: [{ text: req.body.AI }]
+                }
+              ]
+            },
+            {
+              params: { key: process.env.GEMINI_API_KEY },
+              timeout: 7000
+            }
+          );
+
+          data =
+            aiResponse?.data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ||
+            'No response generated';
+        } catch (err) {
+          data = 'AI service unavailable';
+        }
+        break;
+
+      default:
+        return res.status(400).json({
+          is_success: false,
+          official_email: EMAIL,
+          message: 'Invalid request key'
         });
-    } catch (error) {
-        res.status(500).json({ is_success: false, error: error.message });
     }
+
+    res.status(200).json({
+      is_success: true,
+      official_email: EMAIL,
+      data
+    });
+  } catch (err) {
+    res.status(500).json({
+      is_success: false,
+      official_email: EMAIL,
+      message: 'Internal server error'
+    });
+  }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
