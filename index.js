@@ -1,14 +1,18 @@
 const express = require('express');
-const axios = require('axios');
-require('dotenv').config();
+const dotenv = require('dotenv');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-const { fibonacci, primeFilter, hcf, lcm } = require('./util');
+const { getFibonacci, getPrimes, getHCF, getLCM } = require('./util');
+
+dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-const EMAIL = 'akshit0274.be23@chitkara.edu.in';
+app.use(express.json());
 
-app.use(express.json({ strict: true }));
+const PORT = process.env.PORT || 3000;
+const EMAIL = process.env.OFFICIAL_EMAIL;
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 app.get('/health', (req, res) => {
   res.status(200).json({
@@ -41,19 +45,19 @@ app.post('/bfhl', async (req, res) => {
 
     switch (key) {
       case 'fibonacci':
-        data = fibonacci(req.body.fibonacci);
+        data = getFibonacci(req.body.fibonacci);
         break;
 
       case 'prime':
-        data = primeFilter(req.body.prime);
+        data = getPrimes(req.body.prime);
         break;
 
       case 'lcm':
-        data = lcm(req.body.lcm);
+        data = getLCM(req.body.lcm);
         break;
 
       case 'hcf':
-        data = hcf(req.body.hcf);
+        data = getHCF(req.body.hcf);
         break;
 
       case 'AI':
@@ -66,37 +70,12 @@ app.post('/bfhl', async (req, res) => {
         }
 
         try {
-          console.log('GROQ_API_KEY loaded:', !!process.env.GROQ_API_KEY);
-
-          const aiResponse = await axios.post(
-            'https://api.groq.com/openai/v1/chat/completions',
-            {
-              model: 'llama3-8b-8192',
-              messages: [
-                {
-                  role: 'user',
-                  content: req.body.AI
-                }
-              ],
-              temperature: 0.2
-            },
-            {
-              headers: {
-                Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
-                'Content-Type': 'application/json'
-              },
-              timeout: 7000
-            }
+          const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+          const result = await model.generateContent(
+            `Answer in exactly one word: ${req.body.AI}`
           );
-
-          data =
-            aiResponse?.data?.choices?.[0]?.message?.content?.trim() ||
-            'No response generated';
-        } catch (err) {
-          console.error(
-            err.response?.status,
-            err.response?.data || err.message
-          );
+          data = result.response.text().trim();
+        } catch {
           data = 'AI service unavailable';
         }
         break;
@@ -109,14 +88,13 @@ app.post('/bfhl', async (req, res) => {
         });
     }
 
-    return res.status(200).json({
+    res.status(200).json({
       is_success: true,
       official_email: EMAIL,
       data
     });
   } catch (err) {
-    console.error(err.message);
-    return res.status(500).json({
+    res.status(500).json({
       is_success: false,
       official_email: EMAIL,
       message: 'Internal server error'
