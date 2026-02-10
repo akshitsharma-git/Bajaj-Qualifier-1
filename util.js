@@ -1,75 +1,55 @@
-function toInteger(value) {
-  const num = Number(value);
-  if (!Number.isInteger(num)) {
-    throw new Error('Value must be an integer');
-  }
-  return num;
-}
-
-function sanitizeArray(arr) {
-  if (!Array.isArray(arr) || arr.length === 0) {
-    throw new Error('Input must be a non-empty array');
-  }
-  return arr.map(toInteger);
-}
-
-function fibonacci(n) {
-  n = toInteger(n);
-
-  if (n < 0 || n > 1000) {
+function getFibonacci(n) {
+  const num = Number(n);
+  if (!Number.isInteger(num) || num < 0 || num > 1000) {
     throw new Error('Invalid fibonacci input');
   }
 
-  const result = [];
-  let a = 0;
-  let b = 1;
-
-  for (let i = 0; i < n; i++) {
-    result.push(a);
+  const res = [];
+  let a = 0, b = 1;
+  for (let i = 0; i < num; i++) {
+    res.push(a);
     [a, b] = [b, a + b];
   }
-
-  return result;
+  return res;
 }
 
-function isPrime(num) {
-  if (num < 2) return false;
-
-  for (let i = 2; i <= Math.sqrt(num); i++) {
-    if (num % i === 0) return false;
+function getPrimes(arr) {
+  if (!Array.isArray(arr) || arr.length === 0) {
+    throw new Error('Invalid prime input');
   }
 
-  return true;
-}
-
-function primeFilter(arr) {
-  const numbers = sanitizeArray(arr);
-  return numbers.filter(isPrime);
+  return arr
+    .map(Number)
+    .filter(n => Number.isInteger(n) && n > 1)
+    .filter(n => {
+      for (let i = 2; i <= Math.sqrt(n); i++) {
+        if (n % i === 0) return false;
+      }
+      return true;
+    });
 }
 
 function gcd(a, b) {
   return b === 0 ? Math.abs(a) : gcd(b, a % b);
 }
 
-function hcf(arr) {
-  const numbers = sanitizeArray(arr);
-  return numbers.reduce((acc, val) => gcd(acc, val));
+function getHCF(arr) {
+  if (!Array.isArray(arr) || arr.length === 0) {
+    throw new Error('Invalid hcf input');
+  }
+  return arr.map(Number).reduce((a, b) => gcd(a, b));
 }
 
-function lcm(arr) {
-  const numbers = sanitizeArray(arr);
-
-  return numbers.reduce((acc, val) => {
-    if (val === 0) {
-      throw new Error('LCM with zero is not allowed');
-    }
-    return Math.abs(acc * val) / gcd(acc, val);
-  });
+function getLCM(arr) {
+  if (!Array.isArray(arr) || arr.length === 0) {
+    throw new Error('Invalid lcm input');
+  }
+  return arr.map(Number).reduce((a, b) => Math.abs(a * b) / gcd(a, b));
 }
 
 module.exports = {
-  fibonacci,
-  primeFilter,
-  hcf,
-  lcm
+  getFibonacci,
+  getPrimes,
+  getHCF,
+  getLCM
 };
