@@ -1,5 +1,22 @@
+function toInteger(value) {
+  const num = Number(value);
+  if (!Number.isInteger(num)) {
+    throw new Error('Value must be an integer');
+  }
+  return num;
+}
+
+function sanitizeArray(arr) {
+  if (!Array.isArray(arr) || arr.length === 0) {
+    throw new Error('Input must be a non-empty array');
+  }
+  return arr.map(toInteger);
+}
+
 function fibonacci(n) {
-  if (!Number.isInteger(n) || n < 0 || n > 1000) {
+  n = toInteger(n);
+
+  if (n < 0 || n > 1000) {
     throw new Error('Invalid fibonacci input');
   }
 
@@ -16,7 +33,7 @@ function fibonacci(n) {
 }
 
 function isPrime(num) {
-  if (!Number.isInteger(num) || num < 2) return false;
+  if (num < 2) return false;
 
   for (let i = 2; i <= Math.sqrt(num); i++) {
     if (num % i === 0) return false;
@@ -26,11 +43,8 @@ function isPrime(num) {
 }
 
 function primeFilter(arr) {
-  if (!Array.isArray(arr) || arr.length === 0) {
-    throw new Error('Invalid prime input');
-  }
-
-  return arr.filter(isPrime);
+  const numbers = sanitizeArray(arr);
+  return numbers.filter(isPrime);
 }
 
 function gcd(a, b) {
@@ -38,21 +52,16 @@ function gcd(a, b) {
 }
 
 function hcf(arr) {
-  if (!Array.isArray(arr) || arr.length === 0) {
-    throw new Error('Invalid hcf input');
-  }
-
-  return arr.reduce((acc, val) => gcd(acc, val));
+  const numbers = sanitizeArray(arr);
+  return numbers.reduce((acc, val) => gcd(acc, val));
 }
 
 function lcm(arr) {
-  if (!Array.isArray(arr) || arr.length === 0) {
-    throw new Error('Invalid lcm input');
-  }
+  const numbers = sanitizeArray(arr);
 
-  return arr.reduce((acc, val) => {
-    if (!Number.isInteger(val)) {
-      throw new Error('Invalid lcm input');
+  return numbers.reduce((acc, val) => {
+    if (val === 0) {
+      throw new Error('LCM with zero is not allowed');
     }
     return Math.abs(acc * val) / gcd(acc, val);
   });
