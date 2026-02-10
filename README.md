@@ -1,1 +1,0 @@
-# Bajaj-Qualifier-1
