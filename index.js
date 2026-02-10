@@ -70,7 +70,7 @@ app.post('/bfhl', async (req, res) => {
         }
 
         try {
-          const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+          const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
           const result = await model.generateContent(
             `Answer in exactly one word: ${req.body.AI}`
           );
