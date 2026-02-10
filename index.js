@@ -10,7 +10,6 @@ const EMAIL = 'akshit0274.be23@chitkara.edu.in';
 
 app.use(express.json({ strict: true }));
 
-// Health check
 app.get('/health', (req, res) => {
   res.status(200).json({
     is_success: true,
@@ -18,10 +17,9 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Main API
 app.post('/bfhl', async (req, res) => {
   try {
-    if (!req.body || Object.keys(req.body).length === 0) {
+    if (!req.body || typeof req.body !== 'object' || Object.keys(req.body).length === 0) {
       return res.status(400).json({
         is_success: false,
         official_email: EMAIL,
@@ -68,6 +66,8 @@ app.post('/bfhl', async (req, res) => {
         }
 
         try {
+          console.log('GROQ_API_KEY loaded:', !!process.env.GROQ_API_KEY);
+
           const aiResponse = await axios.post(
             'https://api.groq.com/openai/v1/chat/completions',
             {
@@ -93,6 +93,10 @@ app.post('/bfhl', async (req, res) => {
             aiResponse?.data?.choices?.[0]?.message?.content?.trim() ||
             'No response generated';
         } catch (err) {
+          console.error(
+            err.response?.status,
+            err.response?.data || err.message
+          );
           data = 'AI service unavailable';
         }
         break;
@@ -105,13 +109,14 @@ app.post('/bfhl', async (req, res) => {
         });
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       is_success: true,
       official_email: EMAIL,
       data
     });
   } catch (err) {
-    res.status(500).json({
+    console.error(err.message);
+    return res.status(500).json({
       is_success: false,
       official_email: EMAIL,
       message: 'Internal server error'
