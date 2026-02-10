@@ -1,47 +1,66 @@
-export const getFibonacci = (n) => {
-    if (typeof n !== 'number' || n <= 0) return []; // edge cases
-    if (n === 1) return [0];
-    
-    const sequence = [0, 1];
-    while (sequence.length < n) {
-        const nextVal = sequence[sequence.length - 1] + sequence[sequence.length - 2];
-        sequence.push(nextVal);
+function fibonacci(n) {
+  if (!Number.isInteger(n) || n < 0 || n > 1000) {
+    throw new Error('Invalid fibonacci input');
+  }
+
+  const result = [];
+  let a = 0;
+  let b = 1;
+
+  for (let i = 0; i < n; i++) {
+    result.push(a);
+    [a, b] = [b, a + b];
+  }
+
+  return result;
+}
+
+function isPrime(num) {
+  if (!Number.isInteger(num) || num < 2) return false;
+
+  for (let i = 2; i <= Math.sqrt(num); i++) {
+    if (num % i === 0) return false;
+  }
+
+  return true;
+}
+
+function primeFilter(arr) {
+  if (!Array.isArray(arr) || arr.length === 0) {
+    throw new Error('Invalid prime input');
+  }
+
+  return arr.filter(isPrime);
+}
+
+function gcd(a, b) {
+  return b === 0 ? Math.abs(a) : gcd(b, a % b);
+}
+
+function hcf(arr) {
+  if (!Array.isArray(arr) || arr.length === 0) {
+    throw new Error('Invalid hcf input');
+  }
+
+  return arr.reduce((acc, val) => gcd(acc, val));
+}
+
+function lcm(arr) {
+  if (!Array.isArray(arr) || arr.length === 0) {
+    throw new Error('Invalid lcm input');
+  }
+
+  return arr.reduce((acc, val) => {
+    if (!Number.isInteger(val)) {
+      throw new Error('Invalid lcm input');
     }
-    return sequence;
-};
+    return Math.abs(acc * val) / gcd(acc, val);
+  });
+}
 
-export const getPrimes = (nums) => {
-    if (!Array.isArray(nums)) return [];
-    
-    return nums.filter(num => {
-        if (num < 2) return false; // optimization check
-        for (let i = 2; i <= Math.sqrt(num); i++) {
-            if (num % i === 0) return false;
-        }
-        return true;
-    });
-};
-
-const findGcd = (a, b) => {
-    a = Math.abs(a);
-    b = Math.abs(b);
-    while (b) {
-        a %= b;
-        [a, b] = [b, a];
-    }
-    return a;
-};
-
-export const getHCF = (numbers) => { 
-    if (!Array.isArray(numbers) || numbers.length === 0) return 0; // Return 0 for invalid input
-    return numbers.reduce((acc, curr) => findGcd(acc, curr));
-};
-
-export const getLCM = (numbers) => {
-    if (!Array.isArray(numbers) || numbers.length === 0) return 0;
-    
-    return numbers.reduce((acc, curr) => {
-        if (acc === 0 || curr === 0) return 0;
-        return Math.abs(acc * curr) / findGcd(acc, curr);
-    });
+module.exports = {
+  fibonacci,
+  primeFilter,
+  hcf,
+  lcm
 };
